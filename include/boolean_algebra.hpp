@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,37 @@ public:
     for (const auto &term : this->terms) {
       std::vector<int> r = this->getMinterms(term.first);
       result.push_back(r);
+    }
+
+    return result;
+  }
+
+  std::set<int> getDontCareMinterms() const {
+    std::set<int> result;
+
+    const size_t sum_num = POW_OF_TWO(this->vars.size());
+
+    for (size_t i = 0; i < sum_num; ++i) {
+      for (const auto &term : this->terms) {
+        if (term.second != '-')
+          continue;
+
+        bool equal = true;
+        const size_t vars_num = this->vars.size();
+
+        for (size_t j = 0; j < vars_num; ++j) {
+          const char c = term.first[j];
+          if (c == '-' ||
+              (ASCII_TO_NUM(c) == ((i >> (vars_num - j - 1)) & 1))) {
+            equal &= true;
+          } else {
+            equal &= false;
+          }
+        }
+
+        if (equal)
+          result.insert(i);
+      }
     }
 
     return result;

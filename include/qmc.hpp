@@ -7,6 +7,7 @@
 #include <vector>
 
 class QuineMcCluskey {
+public:
   class Table {
   public:
     std::vector<int> minterms;
@@ -17,7 +18,6 @@ class QuineMcCluskey {
     Table() : marked(false) {}
   };
 
-public:
   typedef std::vector<Table> group_t;
   typedef std::vector<group_t> groups_t;
 
