@@ -1,53 +1,87 @@
 #include "boolean_algebra.hpp"
 #include "petrick_method.hpp"
+#include "pla.hpp"
 #include "qmc.hpp"
 
-#include <iostream>
+#include <chrono>
+#include <fstream>
 #include <map>
 #include <set>
+#include <sstream>
 #include <utility>
 
 using namespace std;
 
+bool debug = false;
+
+void printUsage(char *executable_name) {
+  cout << "Usage: " << executable_name << " <input_pla> <output_pla> [--debug]"
+       << endl;
+}
+
 int main(int argc, char *argv[]) {
+  stringstream ss;
+
+  if (argc < 2) {
+    printUsage(argv[0]);
+    return 1;
+  }
+
+  if (argc >= 4) {
+    if (strcmp(argv[3], "--debug") == 0) {
+      debug = true;
+      auto now = std::chrono::system_clock::now();
+      std::time_t end_time = std::chrono::system_clock::to_time_t(now);
+      ss << "# Exact Boolean Minimization Debug" << endl;
+      ss << "> Report generated time " << std::ctime(&end_time) << endl;
+    }
+  }
+
+  const char *input_file = argv[1];
+  const char *output_file = argv[2];
+
+  ifstream ifs;
+  ifs.open(input_file);
+  if (!ifs.is_open()) {
+    cout << "Error: Could not open input file " << input_file << endl;
+    return 1;
+  }
+
+  ofstream ofs;
+  ofs.open(output_file);
+  if (!ofs.is_open()) {
+    cout << "Error: Could not open output file " << output_file << endl;
+    return 1;
+  }
+
+  PLA input_pla;
+  input_pla.parse(ifs);
+  if (!input_pla.end) {
+    cout << "Error: Could not parse input file " << input_file << endl;
+    return 1;
+  }
+
   BooleanAlgebra algebra;
-
-  algebra.vars.push_back("a");
-  algebra.vars.push_back("b");
-  algebra.vars.push_back("c");
-  algebra.vars.push_back("d");
-
-  // 00-0 1
-  // 0-11 1
-  // 1-01 1
-  // 0101 1
-  // 1111 -
-  // 100- 1
-  // -01- 1
-  algebra.terms.push_back(make_pair("00-0", '1'));
-  algebra.terms.push_back(make_pair("0-11", '1'));
-  algebra.terms.push_back(make_pair("1-01", '1'));
-  algebra.terms.push_back(make_pair("0101", '1'));
-  algebra.terms.push_back(make_pair("1111", '-'));
-  algebra.terms.push_back(make_pair("100-", '1'));
-  algebra.terms.push_back(make_pair("-01-", '1'));
+  algebra.vars = input_pla.input_vars;
+  algebra.terms = input_pla.product_terms;
 
   auto all_minterms = algebra.getAllMinterms();
   auto dont_care = algebra.getDontCareMinterms();
 
-  cout << "= Minterms ===================" << endl;
+  ss << "## Minterms" << endl;
   for (const auto &minterms : all_minterms) {
+    ss << " - ";
     for (const int &i : minterms) {
-      cout << "m" << i << ", ";
+      ss << "m" << i << ", ";
     }
-    cout << endl << "========" << endl;
+    ss << endl;
   }
 
-  cout << "# Don't care" << endl;
+  ss << "## Don't care" << endl;
   for (const auto &d : dont_care) {
-    cout << "m" << d << ", ";
+    ss << "m" << d << ", ";
   }
-  cout << endl;
+  ss << endl;
 
   set<int> all_minterms_set;
   for (const auto &minterms : all_minterms) {
@@ -59,24 +93,24 @@ int main(int argc, char *argv[]) {
   qmc.vars_num = algebra.vars.size();
   qmc.buildTables(all_minterms_set);
 
-  cout << "# Table" << endl;
+  ss << "## QMC Table" << endl;
   size_t i = 0;
   for (const auto &g : qmc.groups) {
-    cout << "## " << i << endl;
+    ss << "### " << i << endl;
 
-    cout << "| minterms | literals |" << endl;
-    cout << "| --- | --- |" << endl;
+    ss << "| minterms | literals |" << endl;
+    ss << "| --- | --- |" << endl;
     for (const auto &t : g) {
-      cout << "| ";
+      ss << "| ";
       for (const int &m : t.minterms) {
-        cout << "m" << m << ", ";
+        ss << "m" << m << ", ";
       }
-      cout << " | ";
+      ss << " | ";
 
       for (const char &l : t.literals) {
-        cout << l;
+        ss << l;
       }
-      cout << " |" << endl;
+      ss << " |" << endl;
     }
 
     i += 1;
@@ -84,23 +118,23 @@ int main(int argc, char *argv[]) {
 
   QuineMcCluskey::groups_t pi = qmc.generate();
 
-  cout << "# Prime Implicant" << endl;
+  ss << "## Prime Implicant" << endl;
   size_t j = 0;
   for (const auto &group : pi) {
-    cout << "## Group " << j << endl;
+    ss << "### Group " << j << endl;
 
-    cout << "| minterms | literals | marked |" << endl;
-    cout << "| --- | --- | --- |" << endl;
+    ss << "| minterms | literals | marked |" << endl;
+    ss << "| --- | --- | --- |" << endl;
     for (const auto &table : group) {
-      cout << "| ";
+      ss << "| ";
       for (const int &m : table.minterms)
-        cout << "m" << m << ", ";
+        ss << "m" << m << ", ";
 
-      cout << " | ";
+      ss << " | ";
       for (const char &c : table.literals)
-        cout << c;
+        ss << c;
 
-      cout << " | " << table.marked << " |" << endl;
+      ss << " | " << table.marked << " |" << endl;
     }
 
     j += 1;
@@ -161,71 +195,97 @@ int main(int argc, char *argv[]) {
       remaining_pi.push_back(*it_a);
   }
 
-  cout << "# Essential PI" << endl;
-  cout << "| literals |" << endl;
-  cout << "| --- |" << endl;
+  ss << "## Essential PI" << endl;
+  ss << "| literals |" << endl;
+  ss << "| --- |" << endl;
   for (const auto &table : epi) {
-    cout << "| ";
+    ss << "| ";
     for (const char &c : table.literals) {
-      cout << c;
+      ss << c;
     }
-    cout << " |" << endl;
+    ss << " |" << endl;
   }
 
-  cout << "## Remaining PI" << endl;
-  cout << "| literals |" << endl;
-  cout << "| --- |" << endl;
+  ss << "## Remaining PI" << endl;
+  ss << "| literals |" << endl;
+  ss << "| --- |" << endl;
   for (const auto &table : remaining_pi) {
-    cout << "| ";
+    ss << "| ";
     for (const char &c : table.literals) {
-      cout << c;
+      ss << c;
     }
-    cout << " |" << endl;
+    ss << " |" << endl;
   }
 
-  cout << "## Remaining Minterms" << endl;
+  ss << "## Remaining Minterms" << endl;
   for (const int &m : remaining_minterms) {
-    cout << "m" << m << ", ";
+    ss << "m" << m << ", ";
   }
-  cout << endl;
+  ss << endl;
 
   PetrickMethod petrick;
   petrick.remaining_minterms = remaining_minterms;
   petrick.remaining_pi = remaining_pi;
   auto best = petrick.generate();
 
-  cout << "# Best solutions" << endl;
-  for (const auto &r : best) {
-    cout << " - ";
+  ss << "## Best solutions" << endl;
+  for (size_t i = 0; i < max(size_t(1), best.size()); ++i) {
+    ss << " - ";
     // essential PI
     for (const auto &pi : epi) {
       size_t i = 0;
       for (const char &c : pi.literals) {
         if (c != '-')
-          cout << algebra.vars[i] << (c == '0' ? "'" : "");
+          ss << algebra.vars[i] << (c == '0' ? "'" : "");
         i += 1;
       }
-      cout << " + ";
+      ss << " + ";
+    }
+
+    if (i + 1 > best.size()) {
+      ss << endl;
+      continue;
     }
 
     // remaining PI
-    for (const auto &pi : r) {
+    for (const auto &pi : best[i]) {
       size_t i = 0;
       for (const char &c : pi.literals) {
         if (c != '-')
-          cout << algebra.vars[i] << (c == '0' ? "'" : "");
+          ss << algebra.vars[i] << (c == '0' ? "'" : "");
         i += 1;
       }
-      cout << " + ";
+      ss << " + ";
     }
 
-    cout << endl;
+    ss << endl;
   }
 
-  // b'd' + bd + b'c + ab'
-  // b'd' + bd + b'c + ad
-  // b'd' + bd + ab' + cd
-  // b'd' + bd + cd + ad
+  // create output pla
+  PLA output_pla;
+  output_pla.input_num = input_pla.input_num;
+  output_pla.input_vars = input_pla.input_vars;
+  output_pla.output_num = input_pla.output_num;
+  output_pla.output_vars = input_pla.output_vars;
+
+  // essential PI
+  for (const auto &pi : epi) {
+    output_pla.product_terms.push_back(make_pair(pi.literals, '1'));
+  }
+
+  // remaining best solutions PI
+  if (best.size() > 0) {
+    for (const auto &pi : best[0]) {
+      output_pla.product_terms.push_back(make_pair(pi.literals, '1'));
+    }
+  }
+
+  output_pla.product_terms_num = output_pla.product_terms.size();
+
+  output_pla.exports(ofs);
+
+  if (debug)
+    cout << ss.str();
 
   return 0;
 }

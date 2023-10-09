@@ -15,71 +15,7 @@ public:
   std::vector<std::pair<std::string, char>> terms;
 
 public:
-  std::vector<int> getMinterms(std::string term) const {
-    std::vector<int> result;
-    const size_t sum_num = POW_OF_TWO(this->vars.size());
-
-    for (size_t i = 0; i < sum_num; ++i) {
-      bool equal = true;
-      // std::cout << term << "==";
-
-      const size_t vars_num = this->vars.size();
-      for (size_t j = 0; j < vars_num; ++j) {
-        const char c = term[j];
-        // std::cout << ((i >> (vars_num - j - 1)) & 1);
-        if (c == '-' || (ASCII_TO_NUM(c) == ((i >> (vars_num - j - 1)) & 1))) {
-          equal &= true;
-        } else {
-          equal &= false;
-        }
-      }
-      // std::cout << "=" << equal << std::endl;
-      if (equal)
-        result.push_back(i);
-    }
-
-    return result;
-  }
-
-  std::vector<std::vector<int>> getAllMinterms() const {
-    std::vector<std::vector<int>> result;
-
-    for (const auto &term : this->terms) {
-      std::vector<int> r = this->getMinterms(term.first);
-      result.push_back(r);
-    }
-
-    return result;
-  }
-
-  std::set<int> getDontCareMinterms() const {
-    std::set<int> result;
-
-    const size_t sum_num = POW_OF_TWO(this->vars.size());
-
-    for (size_t i = 0; i < sum_num; ++i) {
-      for (const auto &term : this->terms) {
-        if (term.second != '-')
-          continue;
-
-        bool equal = true;
-        const size_t vars_num = this->vars.size();
-
-        for (size_t j = 0; j < vars_num; ++j) {
-          const char c = term.first[j];
-          if (c == '-' ||
-              (ASCII_TO_NUM(c) == ((i >> (vars_num - j - 1)) & 1))) {
-            equal &= true;
-          } else {
-            equal &= false;
-          }
-        }
-
-        if (equal)
-          result.insert(i);
-      }
-    }
-
-    return result;
-  }
+  std::vector<int> getMinterms(std::string) const;
+  std::vector<std::vector<int>> getAllMinterms() const;
+  std::set<int> getDontCareMinterms() const;
 };
