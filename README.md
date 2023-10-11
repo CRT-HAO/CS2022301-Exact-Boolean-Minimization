@@ -15,10 +15,12 @@
 
 ## Build
 
+Use CMake as build tool
+
 ```bash
 mkdir build
 cd build
-cmake -DCMake_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
 
