@@ -1,6 +1,7 @@
 #include "petrick_method.hpp"
 #include "qmc.hpp"
 
+#include <algorithm>
 #include <set>
 #include <vector>
 

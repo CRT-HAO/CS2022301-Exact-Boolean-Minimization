@@ -3,7 +3,9 @@
 #include "pla.hpp"
 #include "qmc.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <map>
 #include <set>
