@@ -8,14 +8,15 @@
 
 - GNU GCC/Clang with C++14 supported
 - CMake >= 3.18
+- Make or Ninja build tool
 
-> Visual C++ may be supported, but not tested
+> Microsoft Visual C++ may be supported, but not tested
 
 
 
 ## Build
 
-Use CMake as build tool
+Use CMake to build the program
 
 ```bash
 mkdir build
@@ -23,6 +24,24 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
+
+
+
+## Usage
+
+```shell
+Usage: ./exact_boolean_minimization <input_pla> <output_pla> [--debug]
+```
+
+### Example
+
+```shell
+./exact_boolean_minimization ../examples/set03/case1.pla ./output/set03/case1.pla
+Total number of terms: 3
+Total number of literals: 6
+```
+
+### Output
 
 
 
@@ -66,14 +85,13 @@ cmake version 3.26.4
 .o 1
 .ilb a b c d
 .ob f
-.p 8
-0000 -
+.p 7
 001- 1
-01-- 1
-10-- 1
-110- 1
-111- 1
--000 1
+0111 1
+10-1 1
+1101 1
+0001 -
+1010 -
 1111 -
 .e
 ```
@@ -86,15 +104,15 @@ cmake version 3.26.4
 .ilb a b c d 
 .ob f 
 .p 3
---1- 1
--1-- 1
-1--- 1
+-01- 1
+--11 1
+1--1 1
 .e
 ```
 
 #### Best solutions
 
-- $f = c + b + a$
+- $b'c + cd + ad$
 
 
 
@@ -109,12 +127,15 @@ cmake version 3.26.4
 .o 1
 .ilb a b c d e
 .ob f
-.p 5
--1101 1
-01--1 1
--0011 1
-11100 -
----11 1
+.p 8
+0110- 1
+-1000 1
+0-00- -
+01-01 1
+0-101 1
+10-10 1
+1-1-0 1
+010-- 1
 .e
 ```
 
@@ -125,22 +146,24 @@ cmake version 3.26.4
 .o 1
 .ilb a b c d e 
 .ob f 
-.p 3
-01--1 1
----11 1
-1110- 1
+.p 5
+0--01 1
+010-- 1
+-1-00 1
+10-10 1
+1-1-0 1
 .e
 ```
 
 #### Best solutions
 
-- $f = a'be + de + abcd'$
-
-- $f = a'be + de + bce$
+- $a'd'e + a'bc' + bd'e' + ab'de' + ace'$
 
 
 
 #### Case 3
+
+[./examples/set03/case3.pla](./examples/set03/case3.pla)
 
 #### Input PLA
 
@@ -149,23 +172,15 @@ cmake version 3.26.4
 .o 1
 .ilb a b c d e g
 .ob f
-.p 16
-0000100 1
-0001000 1
-0--1011 1
-0010101 1
-0001101 -
-0011-01 1
-0011010 1
-0011101 1
-010-111 1
-01011-1 1
-0110101 1
-0111001 -
-01011-1 1
-0110111 1
-0111011 1
-0111101 1
+.p 8
+00--00 1
+1-11-- -
+-11-01 1
+0-1110 1
+11-011 1
+011101 1
+-11--0 1
+11-0-1 1
 .e
 ```
 
@@ -176,23 +191,16 @@ cmake version 3.26.4
 .o 1
 .ilb a b c d e g 
 .ob f 
-.p 6
-00--10 1
-00-10- 1
-0--101 1
-0--110 1
-010-11 1
-01101- 1
+.p 5
+00--00 1
+--11-0 1
+-11-0- 1
+-11--0 1
+11-0-1 1
 .e
 ```
 
 #### Best solutions
 
-- $f = a'b'eg' + a'b'de' + a'de'g + a'deg' + a'bc'eg + a'bcd'e$
-
-- $f = a'b'eg' + a'b'de' + a'de'g + a'ceg' + a'bd'eg + a'bc'de$
-
-- $f = a'b'eg' + a'b'dg' + a'de'g + a'deg' + a'bc'eg + a'bcd'e$
-  
-- $f = a'b'eg' + a'b'dg' + a'de'g + a'ceg' + a'bd'eg + a'bc'de$
+- $a'b'e'g' + cdg' + bce' + bcg' + abd'g$
 
