@@ -163,6 +163,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  ss << "## Remaining Minterms" << endl;
+  for (const int &m : remaining_minterms) {
+    ss << "m" << m << ", ";
+  }
+  ss << endl;
+
   for (auto it_a = pi_flat.begin(); it_a != pi_flat.end(); ++it_a) {
     bool remaining = true;
     for (const auto &term : it_a->minterms) {
@@ -285,6 +291,18 @@ int main(int argc, char *argv[]) {
   output_pla.product_terms_num = output_pla.product_terms.size();
 
   output_pla.exports(ofs);
+
+  // console output
+  size_t total_literals = 0, total_terms = output_pla.product_terms_num;
+  for (const auto &term : output_pla.product_terms) {
+    for (const char &c : term.first) {
+      if (c == '1' || c == '0')
+        total_literals += 1;
+    }
+  }
+
+  cout << "Total number of terms: " << total_terms << endl
+       << "Total number of literals: " << total_literals << endl;
 
   if (debug)
     cout << ss.str();
